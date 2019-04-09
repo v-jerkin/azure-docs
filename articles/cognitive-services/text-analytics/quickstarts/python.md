@@ -114,7 +114,7 @@ HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 
 The [`sentiment` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c9) detects the sentiment of text documents, on a scale of 0.0 (unfavorable) to 1.0 (favorable). Values around 0.5 represent neutral sentiment.
 
-In practice, a sentiment analysis call works much like a language detection call. Up to 100 pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within set of documents in a given `sentiment` call. 
+In practice, a sentiment analysis call works much like a language detection call. Multiple pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `sentiment` call. 
 
 You must also specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
@@ -155,7 +155,7 @@ HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 
 The [`key_phrases` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c6) extracts key phrases from a text document.
 
-A key phrase extraction call works much like a sentiment analysis call. Up to 100 pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within set of documents in a given `key_phrases` call. 
+A key phrase extraction call works much like a sentiment analysis call. Multiple "document can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `key_phrases` call. 
 
 You must specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
@@ -196,7 +196,7 @@ HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 
 Finally, the [`entities` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/5ac4251d5b4ccd1554da7634) identifies entities (businesses, people, places, and other proper nouns) in a text document.
 
-The overall process is familiar. Up to 100 pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within set of documents in a given `entities` call. 
+The overall process is familiar. Multiple documents can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `entities` call. 
 
 You must specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class stores the required information about each document. 
 
