@@ -25,17 +25,17 @@ You can run this example as a Jupyter notebook on [MyBinder](https://mybinder.or
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Microsoft/cognitive-services-notebooks/master?filepath=TextAnalytics.ipynb)
 
-Refer to the Text Analytics service's [REST API documentation](https://go.microsoft.com/fwlink/?LinkID=759346) for a reference to the features of the Text Analytics service.
+Refer to the Text Analytics service's [REST API documentation](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics-v2-1/operations/56f30ceeeda5650db055a3c7) for a reference to the four types of analysis that can be performed by the Text Analytics service.
 
 ## Prerequisites
 
-This Quickstart requires Python 3.0 or later and the Text Analytics SDK module for Python. You can install the Text Analytics module with the following shell command.
+This Quickstart requires Python 3.0 or later and the Text Analytics SDK module for Python. You can install the required module with the following shell command.
 
 ```bash
 python -m pip install azure-cognitiveservices-language-textanalytics
 ```
 
-This also installs other modules that are required by the Text Analytics SDK, if you don't already have them.
+This also installs any other modules that are required by the Text Analytics SDK, if you don't already have them.
 
 If you are using your own Jupyter installation to run the code in a notebook, make sure the IPython kernel is up-to-date.
 
