@@ -180,7 +180,7 @@ key_phrases_docs = [
 key_phrases_results = client.key_phrases(documents=key_phrases_docs)
 ```
 
-Much like we've seen with other methods, after the `key_phrases` call, `key_phrases_results.documents` is a list of `KeyPhraseBatchResultItem` instances, each corresponding to a submitted document. The `KeyPhraseBatchResultItem` has a `key_phrases` attribute, which is the detected sentiment value. The Python code below displays the results as an HTML table.
+Much as we've seen with other methods, after the `key_phrases` call, `key_phrases_results.documents` is a list of `KeyPhraseBatchResultItem` instances, each corresponding to a submitted document. The `KeyPhraseBatchResultItem` has a `key_phrases` attribute, which is the detected sentiment value. The Python code below displays the results as an HTML table.
 
 ```python
 table = []
