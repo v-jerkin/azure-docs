@@ -8,11 +8,11 @@ manager: nitinme
 ms.service: cognitive-services
 ms.component: text-analytics
 ms.topic: quickstart
-ms.date: 04/09/2019
+ms.date: 04/15/2019
 ms.author: aahi
 ---
 
-# Quickstart for Text Analytics SDK with Python 
+# Quickstart: Text Analytics with the Python SDK 
 
 This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python: language detection, sentiment analysis, key phrase extraction, and named entity recognition.
 
@@ -52,9 +52,9 @@ Make a note of the [endpoint and subscription key](../How-tos/text-analytics-how
 The code in this Quickstart is presented in short snippets. You can run it on Binder (or your own Jupyter notebook) by placing the cursor into a code block and pressing Control-Enter. You can also run the code by pasting each snippet at the Python command line.
 
 > [!NOTE]
-> Some of the text in the examples is in Spanish and Chinese. Some characters may not appear correctly in a command line session, depending on your platform, locale, and shell. If possible, set your shell to use the UTF-8 text encoding. If collecting the snippets into a file, save the file as UTF-8 and include `# -*- coding: utf-8 -*` at the top of the file.
+> Some of the text in the example data is in Spanish and Chinese. Some characters may not appear correctly in a command line session, depending on your platform, locale, and shell. If possible, set your shell to use the UTF-8 text encoding. If collecting the snippets into a file, save the file as UTF-8 and include `# -*- coding: utf-8 -*` at the top of the file.
 
-Run the following code before running the snippets in other sections. Replace `subscription_key` below with a valid subscription key (in quote marks) and verify that the region in the `endpoint` URL corresponds to the one you used when setting up the service. (If you are using a free trial key, it's in the `westcentralus` region, so you don't need to change the URL.)
+Run the following code before running the snippets in other sections. Replace the `None` value of `subscription_key` with a valid Text Analytics or Cognitive Services subscription key (as a string) and verify that the region in the `endpoint` URL corresponds to the one you used when setting up the service. (If you are using a free trial key, it's in the `westcentralus` region, so you don't need to change the URL.)
 
 ```python
 from azure.cognitiveservices.language.textanalytics import TextAnalyticsClient, models
@@ -67,11 +67,12 @@ except Exception:
     HTML = print    # simply print HTML if we're not in a Jupyter notebook
 
 subscription_key = None
-assert subscription_key
+assert subscription_key, "Provide a valid Text Analytics subscription key"
 
 endpoint = "https://westcentralus.api.cognitive.microsoft.com"
 
 client = TextAnalyticsClient(endpoint, CognitiveServicesCredentials(subscription_key))
+HTML("Text Analytics SDK client {} initialized".format(client.api_version))
 ```
 
 This code:
@@ -94,6 +95,7 @@ language_docs = [ models.LanguageInput(id="1", text="This is a document written 
                 ]
 
 language_results = client.detect_language(documents=language_docs)
+HTML("{} results".format(len(language_results.documents)))
 ```
 
 After the `detect_language()` call returns, `language_results.documents` is a list in the same order as `language_docs`. For each original document, a `LanguageBatchResultItem` is provided, containing information about the language or languages detected in the document. 
@@ -104,15 +106,17 @@ The following Python code generates an HTML table showing the original text and 
 
 ```python
 table = []
-header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Languages (scores)")
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Languages (scores)")
 
 for doc, res in zip(language_docs, language_results.documents):
-    langs = ", ".join("{} ({})".format(lang.name.replace("_", " "), lang.score) for lang in res.detected_languages)
-    row = "<tr><td>{doc.id}</td><td>{doc.text}</td><td>{langs}</td></tr>".format(doc=doc, langs=langs)
+    langs = ", ".join("{} {} ({})".format(lang.name.replace("_", " "), 
+        lang.iso6391_name, lang.score) for lang in res.detected_languages)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{langs}</td></tr>".format(doc=doc, langs=langs)
     table.append(row)
 
 HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
+![Language results](../media/quickstarts/python/language.png)
 
 ## Analyze sentiment
 
@@ -120,7 +124,7 @@ The [`sentiment` method](https://docs.microsoft.com/en-us/python/api/azure-cogni
 
 In practice, a sentiment analysis call works much like a language detection call. Multiple pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `sentiment` call. 
 
-You must also specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
+You must also specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
 The following example scores four documents, two in English and *dos* in Spanish.
 
@@ -137,21 +141,23 @@ sentiment_docs = [
 ]
 
 sentiment_results = client.sentiment(documents=sentiment_docs)
+HTML("{} results".format(len(sentiment_results.documents)))
 ```
 
 After the `sentiment` call, `sentiment_results.documents` is a list of `SentimentBatchResultItem` instances, each corresponding to a submitted document. The `SentimentBatchResultItem` includes a `score` attribute, which is the detected sentiment value. The Python code below displays the sentiment results as an HTML table.
 
 ```python
 table = []
-header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Score")
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Score")
 
 for doc, res in zip(sentiment_docs, sentiment_results.documents):
-    row = "<tr><td>{doc.id}</td><td>{doc.text}</td><td>{score:.3}</td></tr>".format(doc=doc, score=res.score)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{score:0.3f}</td></tr>".format(
+        doc=doc, score=res.score)
     table.append(row)
 
 HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
-
+![Sentiment results](../media/quickstarts/python/sentiment.png)
 
 ## Extract key phrases
 
@@ -159,7 +165,7 @@ The [`key_phrases` method](https://docs.microsoft.com/en-us/python/api/azure-cog
 
 A key phrase extraction call works much like a sentiment analysis call. Multiple "document can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `key_phrases` call. 
 
-You must specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
+You must specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
 We'll use the same documents we used for sentiment analysis in this example: four documents, half in English and half in Spanish. Here's the code to pass them to the `key_phrases` method.
 
@@ -176,21 +182,24 @@ key_phrases_docs = [
 ]
 
 key_phrases_results = client.key_phrases(documents=key_phrases_docs)
+HTML("{} results".format(len(key_phrases_results.documents)))
 ```
 
 Much as we've seen with other methods, after the `key_phrases` call, `key_phrases_results.documents` is a list of `KeyPhraseBatchResultItem` instances, each corresponding to a submitted document. The `KeyPhraseBatchResultItem` has a `key_phrases` attribute, which is the detected sentiment value. The Python code below displays the results as an HTML table.
 
 ```python
 table = []
-header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Key phrases")
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Key phrases")
 
 for doc, res in zip(key_phrases_docs, key_phrases_results.documents):
-    phrases = ",".join(res.key_phrases)
-    row = "<tr><td>{doc.id}</td><td>{doc.text}</td><td>{phrases}</td></tr>".format(doc=doc, phrases=phrases)
+    phrases = ", ".join(res.key_phrases)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{phrases}</td></tr>".format(doc=doc, phrases=phrases)
     table.append(row)
 
 HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
+
+![Key Phrases results](../media/quickstarts/python/key-phrases.png)
 
 ## Named entity recognition
 
@@ -198,19 +207,20 @@ Finally, the [`entities` method](https://docs.microsoft.com/en-us/python/api/azu
 
 The overall process is familiar. Multiple documents can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `entities` call. 
 
-You must specify the language of each document using ISO 639 standard language codes, such as `en` for English. The `MultiLanguageInput` class stores the required information about each document. 
+You must specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class stores the required information about each document. 
 
 As before, here's our document set (this time just in English) and our Python method call.
 
 ```python
 entity_docs = [ 
-    models.MultiLanguageInput(id="1", language="en", text="I really enjoy the new XBox One S. "
-        "It has a clean look, it has 4K/HDR resolution and it is affordable."),
+    models.MultiLanguageInput(id="1", language="en", text="I really enjoy the new XBOX One S. "
+        "It's got a clean look, it's got 4K/HDR resolution, and it is affordable."),
     models.MultiLanguageInput(id="2", language="en", 
         text="The Seattle Seahawks won the Super Bowl in 2014.")
 ]
 
 entity_results = client.entities(documents=entity_docs)
+HTML("{} results".format(len(entity_results.documents)))
 ```
 
 Once more, `entity_results.documents` is a list of `EntitiesBatchResultItem` instances corresponding to the submitted documents. The `entities` attribute of each object is a list of `EntityRecord` objects, each describing an entity recognized in the original document. 
@@ -221,18 +231,19 @@ The following Python code produces an HTML table containing each recognized enti
 
 ```python
 table = []
-header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Entities found")
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Entities found")
 
 for doc, res in zip(entity_docs, entity_results.documents):
-    entities = "<p>".join("{} ({}): {}".format(e.name, e.type, 
-        ", ".join("'{}' in chars {} thru {}".format(m.text, m.offset, m.offset + m.length - 1)
+    entities = "".join("<p><I>{} ({}):</i>{}".format(e.name, e.type, 
+        "".join('<br>"{}" in chars {}-{}'.format(m.text, m.offset, m.offset + m.length - 1)
         for m in e.matches)) for e in res.entities)
-    row = "<tr><td>{doc.id}</td><td>{doc.text}</td><td>{entities}</td></tr>".format(doc=doc, entities=entities)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td>{entities}</td></tr>".format(doc=doc, entities=entities)
     table.append(row)
 
 HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
 
+![Entity results](../media/quickstarts/python/entities.png)
 
 ## Next steps
 
