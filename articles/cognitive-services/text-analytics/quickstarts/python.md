@@ -78,7 +78,7 @@ client = TextAnalyticsClient(endpoint, CognitiveServicesCredentials(subscription
 
 This code:
 
-* Detects whether it is being run in a Jupyter notebook. If not, the `HTML` class (which is used to insert HTML result into a Jupyter notebook) is set to a reference to the `print` command.
+* Detects whether it is being run in a Jupyter notebook. If not, the `HTML` class (which is used to insert an HTML result into a Jupyter notebook) is set to a reference to the `print` command.
 * Sets the subscription key and endpoint, then initializes a Text Analytics client using those variables.
 
 ## Detect language
