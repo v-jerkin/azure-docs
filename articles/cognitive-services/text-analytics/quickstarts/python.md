@@ -56,6 +56,9 @@ Make a note of the [endpoint and subscription key](../How-tos/text-analytics-how
 
 The code in this Quickstart is presented in short snippets. You can run it on Binder (or your own Jupyter notebook) by placing the cursor into a code block and pressing Control-Enter. You can also run the code by pasting each snippet at the Python command line.
 
+> [!NOTE]
+> Some of the text in the examples is in Spanish and Chinese. Some characters may not appear correctly in a command line session, depending on your platform, locale, and shell. If possible, set your shell to use the UTF-8 text encoding. If collecting the snippets into a file, save the file as UTF-8 and include `# -*- coding: utf-8 -*` at the top of the file.
+
 Run the following code before running the snippets in other sections. Replace `subscription_key` below with a valid subscription key (in quote marks) and verify that the region in the `endpoint` URL corresponds to the one you used when setting up the service. (If you are using a free trial key, it's in the `westcentralus` region, so you don't need to change the URL.)
 
 ```python
