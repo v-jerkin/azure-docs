@@ -14,12 +14,7 @@ ms.author: aahi
 
 # Quickstart for Text Analytics SDK with Python 
 
-This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python.
-
-* [Detect languages](#detect_language)
-* [Analyze sentiment](#SentimentAnalysis)
-* [Extract key phrases](#KeyPhraseExtraction)
-* [Named entity recognition](#named_entity_recognition)
+This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python: language detection, sentiment analysis, key phrase extraction, and named entity recognition.
 
 You can run this example as a Jupyter notebook on [MyBinder](https://mybinder.org) by clicking on the **Launch Binder** badge below.
 
