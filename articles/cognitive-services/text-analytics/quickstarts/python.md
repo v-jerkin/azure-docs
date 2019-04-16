@@ -14,18 +14,18 @@ ms.author: aahi
 
 # Quickstart for Text Analytics API with Python 
 
-This walkthrough shows you how to analyze four different aspects of text documents using the [Text Analytics](//go.microsoft.com/fwlink/?LinkID=759711) SDK for Python.
+This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python.
 
-* [Detect language](#Detect)
+* [Detect languages](#detect_language)
 * [Analyze sentiment](#SentimentAnalysis)
 * [Extract key phrases](#KeyPhraseExtraction)
-* [Identify linked entities](#LinkedEntities)
+* [Named entity recognition](#named_entity_recognition)
 
 You can run this example as a Jupyter notebook on [MyBinder](https://mybinder.org) by clicking on the **Launch Binder** badge below.
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Microsoft/cognitive-services-notebooks/master?filepath=TextAnalytics.ipynb)
 
-Refer to the [API definitions](https://go.microsoft.com/fwlink/?LinkID=759346) for a reference to the functionality of the Text Analytics service.
+Refer to the Text Analytics service's [REST API documentation](https://go.microsoft.com/fwlink/?LinkID=759346) for a reference to the main features of the Text Analytics service.
 
 ## Prerequisites
 
@@ -35,6 +35,8 @@ This Quickstart requires Python 3.0 or later and the Text Analytics SDK module f
 python -m pip install azure-cognitiveservices-language-textanalytics
 ```
 
+This also installs other modules that are required by the Text Analytics SDK, if you don't already have them.
+
 If you are using your own Jupyter installation to run the code in a notebook, make sure the IPython kernel is up-to-date.
 
 ```bash
@@ -42,7 +44,7 @@ python -m pip install --upgrade IPython
 ```
 
 > [!TIP]
->  While you could call the [HTTP endpoints](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c6) directly from Python, the SDK makes it much easier to use the service without having to worry about HTTP requests or JSON.
+>  While you could call the [HTTP endpoints](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics-v2-1/operations/56f30ceeeda5650db055a3c7) directly from Python, the SDK makes it much easier to use the service without having to worry about HTTP requests or JSON.
 >
 > A couple of useful links:
 > - [SDK PyPi page](https://pypi.org/project/azure-cognitiveservices-language-textanalytics/)
@@ -62,8 +64,9 @@ from msrest.authentication import CognitiveServicesCredentials
 
 try:
     from IPython.display import HTML
-except ImportError:
-    HTML = print    # simply print HTML if we're not using a Jupyter notebook
+    assert get_ipython().__class__.__name__ == "ZMQInteractiveShell"
+except Exception:
+    HTML = print    # simply print HTML if we're not in a Jupyter notebook
 
 subscription_key = None
 assert subscription_key
@@ -73,9 +76,14 @@ endpoint = "https://westcentralus.api.cognitive.microsoft.com"
 client = TextAnalyticsClient(endpoint, CognitiveServicesCredentials(subscription_key))
 ```
 
-## Detect languages
+This code:
 
-The Text Analytics SDK's [`detect_language` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c7) detects the language of submitted text documents. A document is plain text in a supported language; it need not be in a file.
+* Detects whether it is being run in a Jupyter notebook. If not, the `HTML` class (which is used to insert HTML result into a Jupyter notebook) is set to a reference to the `print` command.
+* Sets the subscription key and endpoint, then initializes a Text Analytics client using those variables.
+
+## Detect language
+
+The Text Analytics client's [`detect_language` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#detect-language-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) detects the language of submitted text documents. A document is plain text in a supported language; it need not be in a file.
 
 To reduce the number of calls involved in processing large numbers of documents, multiple documents may be submitted in a single `detect_language` call. The input to the method is a list of individual documents, each of which is represented by a `LanguageInput` instance.
 
@@ -97,8 +105,6 @@ Each result item contains a `detected_languages` attribute that holds a list of 
 The following Python code generates an HTML table showing the original text and the detected language or languages, along with each language's score.
 
 ```python
-from IPython.display import HTML  # or HTML = print if you aren't using a Jupyter notebook
-
 table = []
 header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Languages (scores)")
 
@@ -112,7 +118,7 @@ HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 
 ## Analyze sentiment
 
-The [`sentiment` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c9) detects the sentiment of text documents, on a scale of 0.0 (unfavorable) to 1.0 (favorable). Values around 0.5 represent neutral sentiment.
+The [`sentiment` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#sentiment-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) detects the sentiment of text documents, on a scale of 0.0 (unfavorable) to 1.0 (favorable). Values around 0.5 represent neutral sentiment.
 
 In practice, a sentiment analysis call works much like a language detection call. Multiple pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `sentiment` call. 
 
@@ -138,8 +144,6 @@ sentiment_results = client.sentiment(documents=sentiment_docs)
 After the `sentiment` call, `sentiment_results.documents` is a list of `SentimentBatchResultItem` instances, each corresponding to a submitted document. The `SentimentBatchResultItem` includes a `score` attribute, which is the detected sentiment value. The Python code below displays the sentiment results as an HTML table.
 
 ```python
-from IPython.display import HTML  # or HTML = print if you aren't using a Jupyter notebook
-
 table = []
 header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Score")
 
@@ -153,7 +157,7 @@ HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 
 ## Extract key phrases
 
-The [`key_phrases` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c6) extracts key phrases from a text document.
+The [`key_phrases` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#key-phrases-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) extracts key phrases from a text document.
 
 A key phrase extraction call works much like a sentiment analysis call. Multiple "document can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `key_phrases` call. 
 
@@ -173,14 +177,12 @@ key_phrases_docs = [
         text="La carretera estaba atascada. Había mucho tráfico el día de ayer."),
 ]
 
-key_phrases_results = client.key_phrases(documents=sentiment_docs)
+key_phrases_results = client.key_phrases(documents=key_phrases_docs)
 ```
 
 Much like we've seen with other methods, after the `key_phrases` call, `key_phrases_results.documents` is a list of `KeyPhraseBatchResultItem` instances, each corresponding to a submitted document. The `KeyPhraseBatchResultItem` has a `key_phrases` attribute, which is the detected sentiment value. The Python code below displays the results as an HTML table.
 
 ```python
-from IPython.display import HTML  # or HTML = print if you aren't using a Jupyter notebook
-
 table = []
 header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Key phrases")
 
@@ -192,9 +194,9 @@ for doc, res in zip(key_phrases_docs, key_phrases_results.documents):
 HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
 
-## Identify linked entities
+## Named entity recognition
 
-Finally, the [`entities` method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/5ac4251d5b4ccd1554da7634) identifies entities (businesses, people, places, and other proper nouns) in a text document.
+Finally, the [`entities` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#entities-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) identifies entities (businesses, people, places, and other proper nouns) in a text document.
 
 The overall process is familiar. Multiple documents can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `entities` call. 
 
@@ -215,18 +217,18 @@ entity_results = client.entities(documents=entity_docs)
 
 Once more, `entity_results.documents` is a list of `EntitiesBatchResultItem` instances corresponding to the submitted documents. The `entities` attribute of each object is a list of `EntityRecord` objects, each describing an entity recognized in the original document. 
 
-There are several attributes of interest on an `EntityRecord` object, including its Bing ID, which can be used to retrieve more information about the entity. In this example, we'll use `name` (the entity's formal name) and `type` (its type). 
+There are several attributes of interest on an `EntityRecord` object, including its Bing ID, which can be used to retrieve more information about the entity. In this example, we'll use `name` (the entity's formal name),  `type` (its type), and `matches` (information about the parts of the document that were matched as each entity).
 
-The following Python code produces an HTML table containing each recognized entity's formal name and its type.
+The following Python code produces an HTML table containing each recognized entity's formal name, its type, and its matches' text and location within the original document.
 
 ```python
-from IPython.display import HTML  # or HTML = print if you aren't using a Jupyter notebook
-
 table = []
 header = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>".format("ID", "Text", "Entities found")
 
 for doc, res in zip(entity_docs, entity_results.documents):
-    entities = ",".join("{} ({})".format(e.name, e.type) for e in res.entities)
+    entities = "<p>".join("{} ({}): {}".format(e.name, e.type, 
+        ", ".join("'{}' in chars {} thru {}".format(m.text, m.offset, m.offset + m.length - 1)
+        for m in e.matches)) for e in res.entities)
     row = "<tr><td>{doc.id}</td><td>{doc.text}</td><td>{entities}</td></tr>".format(doc=doc, entities=entities)
     table.append(row)
 
