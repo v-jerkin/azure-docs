@@ -25,7 +25,7 @@ You can run this example as a Jupyter notebook on [MyBinder](https://mybinder.or
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Microsoft/cognitive-services-notebooks/master?filepath=TextAnalytics.ipynb)
 
-Refer to the Text Analytics service's [REST API documentation](https://go.microsoft.com/fwlink/?LinkID=759346) for a reference to the main features of the Text Analytics service.
+Refer to the Text Analytics service's [REST API documentation](https://go.microsoft.com/fwlink/?LinkID=759346) for a reference to the features of the Text Analytics service.
 
 ## Prerequisites
 
