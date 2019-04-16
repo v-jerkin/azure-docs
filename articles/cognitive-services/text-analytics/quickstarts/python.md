@@ -217,7 +217,7 @@ entity_results = client.entities(documents=entity_docs)
 
 Once more, `entity_results.documents` is a list of `EntitiesBatchResultItem` instances corresponding to the submitted documents. The `entities` attribute of each object is a list of `EntityRecord` objects, each describing an entity recognized in the original document. 
 
-There are several attributes of interest on an `EntityRecord` object, including its Bing ID, which can be used to retrieve more information about the entity. In this example, we'll use `name` (the entity's formal name),  `type` (its type), and `matches` (information about the parts of the document that were matched as each entity).
+There are several attributes of interest on an `EntityRecord` object, including its Bing ID, which can be used to retrieve more information about the entity using [Bing Entity Search](https://azure.microsoft.com/services/cognitive-services/bing-entity-search-api/). In this example, we'll use `name` (the entity's formal name),  `type` (its type), and `matches` (information about the parts of the document that were matched as each entity).
 
 The following Python code produces an HTML table containing each recognized entity's formal name, its type, and its matches' text and location within the original document.
 
