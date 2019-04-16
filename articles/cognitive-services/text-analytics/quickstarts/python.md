@@ -12,7 +12,7 @@ ms.date: 04/09/2019
 ms.author: aahi
 ---
 
-# Quickstart for Text Analytics API with Python 
+# Quickstart for Text Analytics SDK with Python 
 
 This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python.
 
