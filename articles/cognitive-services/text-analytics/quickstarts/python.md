@@ -1,419 +1,249 @@
 ---
 title: 'Quickstart: Using Python to call the Text Analytics API'
 titleSuffix: Azure Cognitive Services
-description: Get information and code samples to help you quickly get started using the Text Analytics API in Azure Cognitive Services.
+description: Get information and code samples to help you quickly get started using the Text Analytics API in Microsoft Cognitive Services on Azure.
 services: cognitive-services
 author: aahill
 manager: nitinme
-
 ms.service: cognitive-services
-ms.subservice: text-analytics
+ms.component: text-analytics
 ms.topic: quickstart
-ms.date: 03/28/2019
+ms.date: 04/15/2019
 ms.author: aahi
 ---
 
-# Quickstart: Using Python to call the Text Analytics Cognitive Service 
-<a name="HOLTop"></a>
+# Quickstart: Text Analytics with the Python SDK 
 
-This walkthrough shows you how to [detect language](#Detect), [analyze sentiment](#SentimentAnalysis), and [extract key phrases](#KeyPhraseExtraction) using the [Text Analytics APIs](//go.microsoft.com/fwlink/?LinkID=759711) with Python.
+This walkthrough shows you how to analyze four different aspects of text documents using the Text Analytics SDK for Python: language detection, sentiment analysis, key phrase extraction, and named entity recognition.
 
-You can run this example from the command line or as a Jupyter notebook on [MyBinder](https://mybinder.org) by clicking on the launch Binder badge:
+You can run this example as a Jupyter notebook on [MyBinder](https://mybinder.org) by clicking on the **Launch Binder** badge below.
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/Microsoft/cognitive-services-notebooks/master?filepath=TextAnalytics.ipynb)
 
-### Command line
-
-You may need to update [IPython](https://ipython.org/install.html), the kernel for Jupyter:
-```bash
-pip install --upgrade IPython
-```
-
-You may need to update the [Requests](http://docs.python-requests.org/en/master/) library:
-```bash
-pip install requests
-```
-
-Refer to the [API definitions](//go.microsoft.com/fwlink/?LinkID=759346) for technical documentation for the APIs.
+Refer to the Text Analytics service's [REST API documentation](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics-v2-1/operations/56f30ceeeda5650db055a3c7) for a reference to the four types of analysis that can be performed by the Text Analytics service.
 
 ## Prerequisites
 
-* [!INCLUDE [cognitive-services-text-analytics-signup-requirements](../../../../includes/cognitive-services-text-analytics-signup-requirements.md)]
+This Quickstart requires Python 3.0 or later and the Text Analytics SDK module for Python. You can install the required module with the following shell command.
 
-* The [endpoint and access key](../How-tos/text-analytics-how-to-access-key.md) that was generated for you during sign-up.
+```bash
+python -m pip install azure-cognitiveservices-language-textanalytics
+```
 
-* The following imports, subscription key, and `text_analytics_base_url` are used for all quickstarts below. Add the imports.
+This also installs any other modules that are required by the Text Analytics SDK, if you don't already have them.
 
-    ```python
-    import requests
-    # pprint is pretty print (formats the JSON)
-    from pprint import pprint
+If you are using your own Jupyter installation to run the code in a notebook, make sure the IPython kernel is up-to-date.
+
+```bash
+python -m pip install --upgrade IPython
+```
+
+> [!TIP]
+>  While you could call the [HTTP endpoints](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics-v2-1/operations/56f30ceeeda5650db055a3c7) directly from Python, the SDK makes it much easier to use the service without having to worry about HTTP requests or JSON.
+>
+> A couple of useful links:
+> - [SDK PyPi page](https://pypi.org/project/azure-cognitiveservices-language-textanalytics/)
+> - [SDK code](https://github.com/Azure/azure-sdk-for-python)
+
+[!INCLUDE cognitive-services-text-analytics-signup-requirements]
+
+Make a note of the [endpoint and subscription key](../How-tos/text-analytics-how-to-access-key.md) associated with your subscription.
+
+The code in this Quickstart is presented in short snippets. You can run it on Binder (or your own Jupyter notebook) by placing the cursor into a code block and pressing Control-Enter. You can also run the code by pasting each snippet at the Python command line.
+
+> [!NOTE]
+> Some of the text in the example data is in Spanish and Chinese. Some characters may not appear correctly in a command line session, depending on your platform, locale, and shell. If possible, set your shell to use the UTF-8 text encoding. If collecting the snippets into a file, save the file as UTF-8 and include `# -*- coding: utf-8 -*` at the top of the file.
+
+Run the following code before running the snippets in other sections. Replace the `None` value of `subscription_key` with a valid Text Analytics or Cognitive Services subscription key (as a string) and verify that the region in the `endpoint` URL corresponds to the one you used when setting up the service. (If you are using a free trial key, it's in the `westcentralus` region, so you don't need to change the URL.)
+
+```python
+from azure.cognitiveservices.language.textanalytics import TextAnalyticsClient, models
+from msrest.authentication import CognitiveServicesCredentials
+
+try:
     from IPython.display import HTML
-    ```
-    
-    Add these lines, then replace `subscription_key` with a valid subscription key that you obtained earlier.
-    
-    ```python
-    subscription_key = '<ADD KEY HERE>'
-    assert subscription_key
-    ```
-    
-    Next, add this line then verify that the region in `text_analytics_base_url` corresponds to the one you used when setting up the service. If you're using a free trial key, you don't need to change anything.
-    
-    ```python
-    text_analytics_base_url = "https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/"
-    ```
+    assert get_ipython().__class__.__name__ == "ZMQInteractiveShell"
+except Exception:
+    HTML = print    # simply print HTML if we're not in a Jupyter notebook
 
-<a name="Detect"></a>
+subscription_key = None
+assert subscription_key, "Provide a valid Text Analytics subscription key"
 
-## Detect languages
+endpoint = "https://westcentralus.api.cognitive.microsoft.com"
 
-The Language Detection API detects the language of a text document, using the [Detect Language method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c7). The service endpoint of the language detection API for your region is available via the following URL:
+client = TextAnalyticsClient(endpoint, CognitiveServicesCredentials(subscription_key))
+HTML("Text Analytics SDK client {} initialized".format(client.api_version))
+```
+
+This code:
+
+* Detects whether it is being run in a Jupyter notebook. If not, the `HTML` class (which is used to insert an HTML result into a Jupyter notebook) is set to a reference to the `print` command.
+* Sets the subscription key and endpoint, then initializes a Text Analytics client using those variables.
+
+## Detect language
+
+The Text Analytics client's [`detect_language` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#detect-language-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) detects the language of submitted text documents. A document is plain text in a supported language; it need not be in a file.
+
+To reduce the number of calls involved in processing large numbers of documents, multiple documents may be submitted in a single `detect_language` call. The input to the method is a list of individual documents, each of which is represented by a `LanguageInput` instance.
+
+As a `LanguageInput` object, each document has `id` and `text` attributes. The `text` attribute stores the text to be analyzed. The `id` attribute is a string that associates each result with its original document, and must be unique within the document set for each `detect_language` call. A sample list with three documents is defined below.
 
 ```python
-language_api_url = text_analytics_base_url + "languages"
-print(language_api_url)
+language_docs = [ models.LanguageInput(id="1", text="This is a document written in English."),
+                  models.LanguageInput(id="2", text="Este es un document escrito en Español."),
+                  models.LanguageInput(id="3", text='这是一个用中文写的文件')
+                ]
+
+language_results = client.detect_language(documents=language_docs)
+HTML("{} results".format(len(language_results.documents)))
 ```
 
-```url
-https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/languages
-```
+After the `detect_language()` call returns, `language_results.documents` is a list in the same order as `language_docs`. For each original document, a `LanguageBatchResultItem` is provided, containing information about the language or languages detected in the document. 
 
-The payload to the API consists of a list of `documents`, each of which in turn contains an `id` and a `text` attribute. The `text` attribute stores the text to be analyzed. 
+Each result item contains a `detected_languages` attribute that holds a list of `DetectedLanguage` objects, each corresponding to a language found in the document. The `name` attribute of this object contains the human-readable name of the language, such as `English`, and the `score` attribute contains how certain the Text Analytics service is of the result on a scale from 0.0 to 1.0.
 
-Replace the `documents` dictionary with any other text for language detection.
-
-```python
-documents = { 'documents': [
-    { 'id': '1', 'text': 'This is a document written in English.' },
-    { 'id': '2', 'text': 'Este es un document escrito en Español.' },
-    { 'id': '3', 'text': '这是一个用中文写的文件' }
-]}
-```
-
-The next few lines of code call out to the language detection API using the `requests` library in Python to determine the language in the documents.
-
-```python
-headers   = {"Ocp-Apim-Subscription-Key": subscription_key}
-response  = requests.post(language_api_url, headers=headers, json=documents)
-languages = response.json()
-pprint(languages)
-```
-
-The following lines of code render the JSON data as an HTML table.
+The following Python code generates an HTML table showing the original text and the detected language or languages, along with each language's score.
 
 ```python
 table = []
-for document in languages["documents"]:
-    text  = next(filter(lambda d: d["id"] == document["id"], documents["documents"]))["text"]
-    langs = ", ".join(["{0}({1})".format(lang["name"], lang["score"]) for lang in document["detectedLanguages"]])
-    table.append("<tr><td>{0}</td><td>{1}</td>".format(text, langs))
-HTML("<table><tr><th>Text</th><th>Detected languages(scores)</th></tr>{0}</table>".format("\n".join(table)))
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Languages (scores)")
+
+for doc, res in zip(language_docs, language_results.documents):
+    langs = ", ".join("{} {} ({})".format(lang.name.replace("_", " "), 
+        lang.iso6391_name, lang.score) for lang in res.detected_languages)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{langs}</td></tr>".format(doc=doc, langs=langs)
+    table.append(row)
+
+HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
-
-Successful JSON response:
-
-```json
-    {'documents': [{'detectedLanguages': [{'iso6391Name': 'en',
-                                           'name': 'English',
-                                           'score': 1.0}],
-                    'id': '1'},
-                   {'detectedLanguages': [{'iso6391Name': 'es',
-                                           'name': 'Spanish',
-                                           'score': 1.0}],
-                    'id': '2'},
-                   {'detectedLanguages': [{'iso6391Name': 'zh_chs',
-                                           'name': 'Chinese_Simplified',
-                                           'score': 1.0}],
-                    'id': '3'}],
-     'errors': []}
-```
-
-<a name="SentimentAnalysis"></a>
+![Language results](../media/quickstarts/python/language.png)
 
 ## Analyze sentiment
 
-The Sentiment Analysis API detects the sentiment (range between positive or negative) of a set of text records, using the [Sentiment method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c9). The following example scores two documents, one in English and another in Spanish.
+The [`sentiment` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#sentiment-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) detects the sentiment of text documents, on a scale of 0.0 (unfavorable) to 1.0 (favorable). Values around 0.5 represent neutral sentiment.
 
-The service endpoint for sentiment analysis is available for your region via the following URL:
+In practice, a sentiment analysis call works much like a language detection call. Multiple pieces of text ("documents") can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `sentiment` call. 
 
-```python
-sentiment_api_url = text_analytics_base_url + "sentiment"
-print(sentiment_api_url)
-```
-    https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment
+You must also specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
-As with the language detection example, the service is provided with a dictionary with a `documents` key that consists of a list of documents. Each document is a tuple consisting of the `id`, the `text` to be analyzed and the `language` of the text. You can use the language detection API from the previous section to populate this field.
+The following example scores four documents, two in English and *dos* in Spanish.
 
 ```python
-documents = {'documents' : [
-  {'id': '1', 'language': 'en', 'text': 'I had a wonderful experience! The rooms were wonderful and the staff was helpful.'},
-  {'id': '2', 'language': 'en', 'text': 'I had a terrible time at the hotel. The staff was rude and the food was awful.'},  
-  {'id': '3', 'language': 'es', 'text': 'Los caminos que llevan hasta Monte Rainier son espectaculares y hermosos.'},  
-  {'id': '4', 'language': 'es', 'text': 'La carretera estaba atascada. Había mucho tráfico el día de ayer.'}
-]}
+sentiment_docs = [ 
+    models.MultiLanguageInput(id="1", language="en", 
+        text="I had a wonderful experience! The rooms were wonderful and the staff was helpful."),
+    models.MultiLanguageInput(id="2", language="en", 
+        text="I had a terrible time at the hotel. The staff was rude and the food was awful."),
+    models.MultiLanguageInput(id="3", language="es", 
+        text="Los caminos que llevan hasta Monte Rainier son espectaculares y hermosos."),
+    models.MultiLanguageInput(id="4", language="es", 
+        text="La carretera estaba atascada. Había mucho tráfico el día de ayer."),
+]
+
+sentiment_results = client.sentiment(documents=sentiment_docs)
+HTML("{} results".format(len(sentiment_results.documents)))
 ```
 
-The sentiment API can now be used to analyze the documents for their sentiments.
-
-```python
-headers   = {"Ocp-Apim-Subscription-Key": subscription_key}
-response  = requests.post(sentiment_api_url, headers=headers, json=documents)
-sentiments = response.json()
-pprint(sentiments)
-```
-
-Successful JSON response:
-
-```json
-{'documents': [{'id': '1', 'score': 0.7673527002334595},
-                {'id': '2', 'score': 0.18574094772338867},
-                {'id': '3', 'score': 0.5}],
-    'errors': []}
-```
-
-The sentiment score for a document is between 0.0 and 1.0, with a higher score indicating a more positive sentiment.
-
-<a name="KeyPhraseExtraction"></a>
-
-## Extract key phrases
-
-The Key Phrase Extraction API extracts key-phrases from a text document, using the [Key Phrases method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics.V2.0/operations/56f30ceeeda5650db055a3c6). This section of the walkthrough extracts key phrases for both English and Spanish documents.
-
-The service endpoint for the key-phrase extraction service is accessed via the following URL:
-
-```python
-key_phrase_api_url = text_analytics_base_url + "keyPhrases"
-print(key_phrase_api_url)
-```
-    https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/keyPhrases
-
-The collection of documents is the same as what was used for sentiment analysis.
-
-```python
-documents = {'documents' : [
-  {'id': '1', 'language': 'en', 'text': 'I had a wonderful experience! The rooms were wonderful and the staff was helpful.'},
-  {'id': '2', 'language': 'en', 'text': 'I had a terrible time at the hotel. The staff was rude and the food was awful.'},  
-  {'id': '3', 'language': 'es', 'text': 'Los caminos que llevan hasta Monte Rainier son espectaculares y hermosos.'},  
-  {'id': '4', 'language': 'es', 'text': 'La carretera estaba atascada. Había mucho tráfico el día de ayer.'}
-]}
-```
-
-The JSON object can be rendered as an HTML table using the following lines of code:
+After the `sentiment` call, `sentiment_results.documents` is a list of `SentimentBatchResultItem` instances, each corresponding to a submitted document. The `SentimentBatchResultItem` includes a `score` attribute, which is the detected sentiment value. The Python code below displays the sentiment results as an HTML table.
 
 ```python
 table = []
-for document in key_phrases["documents"]:
-    text    = next(filter(lambda d: d["id"] == document["id"], documents["documents"]))["text"]    
-    phrases = ",".join(document["keyPhrases"])
-    table.append("<tr><td>{0}</td><td>{1}</td>".format(text, phrases))
-HTML("<table><tr><th>Text</th><th>Key phrases</th></tr>{0}</table>".format("\n".join(table)))
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Score")
+
+for doc, res in zip(sentiment_docs, sentiment_results.documents):
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{score:0.3f}</td></tr>".format(
+        doc=doc, score=res.score)
+    table.append(row)
+
+HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
+![Sentiment results](../media/quickstarts/python/sentiment.png)
 
-The next few lines of code call out to the language detection API using the `requests` library in Python to determine the language in the documents.
-```python
-headers   = {'Ocp-Apim-Subscription-Key': subscription_key}
-response  = requests.post(key_phrase_api_url, headers=headers, json=documents)
-key_phrases = response.json()
-pprint(key_phrases)
-```
+## Extract key phrases
 
-Successful JSON response:
-```json
-{'documents': [
-    {'keyPhrases': ['wonderful experience', 'staff', 'rooms'], 'id': '1'},
-    {'keyPhrases': ['food', 'terrible time', 'hotel', 'staff'], 'id': '2'},
-    {'keyPhrases': ['Monte Rainier', 'caminos'], 'id': '3'},
-    {'keyPhrases': ['carretera', 'tráfico', 'día'], 'id': '4'}],
-    'errors': []
-}
-```
+The [`key_phrases` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#key-phrases-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) extracts key phrases from a text document.
 
-## Identify entities
+A key phrase extraction call works much like a sentiment analysis call. Multiple "document can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `key_phrases` call. 
 
-The Entities API identifies well-known entities in a text document, using the [Entities method](https://westus.dev.cognitive.microsoft.com/docs/services/TextAnalytics-V2-1-Preview/operations/5ac4251d5b4ccd1554da7634). The following example identifies entities for English documents.
+You must specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class holds the required information about each document. 
 
-The service endpoint for the entity linking service is accessed via the following URL:
+We'll use the same documents we used for sentiment analysis in this example: four documents, half in English and half in Spanish. Here's the code to pass them to the `key_phrases` method.
 
 ```python
-entity_linking_api_url = text_analytics_base_url + "entities"
-print(entity_linking_api_url)
+key_phrases_docs = [ 
+    models.MultiLanguageInput(id="1", language="en", 
+        text="I had a wonderful experience! The rooms were wonderful and the staff was helpful."),
+    models.MultiLanguageInput(id="2", language="en", 
+        text="I had a terrible time at the hotel. The staff was rude and the food was awful."),
+    models.MultiLanguageInput(id="3", language="es", 
+        text="Los caminos que llevan hasta Monte Rainier son espectaculares y hermosos."),
+    models.MultiLanguageInput(id="4", language="es", 
+        text="La carretera estaba atascada. Había mucho tráfico el día de ayer."),
+]
+
+key_phrases_results = client.key_phrases(documents=key_phrases_docs)
+HTML("{} results".format(len(key_phrases_results.documents)))
 ```
 
-    https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.1-preview/entities
-
-The collection of documents is below:
+Much as we've seen with other methods, after the `key_phrases` call, `key_phrases_results.documents` is a list of `KeyPhraseBatchResultItem` instances, each corresponding to a submitted document. The `KeyPhraseBatchResultItem` has a `key_phrases` attribute, which is the detected sentiment value. The Python code below displays the results as an HTML table.
 
 ```python
-documents = {'documents' : [
-  {'id': '1', 'text': 'Jeff bought three dozen eggs because there was a 50% discount.'},
-  {'id': '2', 'text': 'The Great Depression began in 1929. By 1933, the GDP in America fell by 25%.'}
-]}
+table = []
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Key phrases")
+
+for doc, res in zip(key_phrases_docs, key_phrases_results.documents):
+    phrases = ", ".join(res.key_phrases)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td><p>{phrases}</td></tr>".format(doc=doc, phrases=phrases)
+    table.append(row)
+
+HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
-Now, the documents can be sent to the Text Analytics API to receive the response.
+
+![Key Phrases results](../media/quickstarts/python/key-phrases.png)
+
+## Named entity recognition
+
+Finally, the [`entities` method](https://docs.microsoft.com/en-us/python/api/azure-cognitiveservices-language-textanalytics/azure.cognitiveservices.language.textanalytics.text_analytics_client.textanalyticsclient?view=azure-python#entities-show-stats-none--documents-none--custom-headers-none--raw-false----operation-config-) identifies entities (businesses, people, places, and other proper nouns) in a text document.
+
+The overall process is familiar. Multiple documents can be submitted in a single call, and each document must have a unique ID within the set of documents in a given `entities` call. 
+
+You must specify the language of each document using ISO 639-1 language codes, such as `en` for English. The `MultiLanguageInput` class stores the required information about each document. 
+
+As before, here's our document set (this time just in English) and our Python method call.
 
 ```python
-headers   = {"Ocp-Apim-Subscription-Key": subscription_key}
-response  = requests.post(entity_linking_api_url, headers=headers, json=documents)
-entities = response.json()
+entity_docs = [ 
+    models.MultiLanguageInput(id="1", language="en", text="I really enjoy the new XBOX One S. "
+        "It's got a clean look, it's got 4K/HDR resolution, and it is affordable."),
+    models.MultiLanguageInput(id="2", language="en", 
+        text="The Seattle Seahawks won the Super Bowl in 2014.")
+]
+
+entity_results = client.entities(documents=entity_docs)
+HTML("{} results".format(len(entity_results.documents)))
 ```
 
-Successful JSON response:
-```json
-{
-    "Documents": [
-        {
-            "Id": "1",
-            "Entities": [
-                {
-                    "Name": "Jeff",
-                    "Matches": [
-                        {
-                            "Text": "Jeff",
-                            "Offset": 0,
-                            "Length": 4
-                        }
-                    ],
-                    "Type": "Person"
-                },
-                {
-                    "Name": "three dozen",
-                    "Matches": [
-                        {
-                            "Text": "three dozen",
-                            "Offset": 12,
-                            "Length": 11
-                        }
-                    ],
-                    "Type": "Quantity",
-                    "SubType": "Number"
-                },
-                {
-                    "Name": "50",
-                    "Matches": [
-                        {
-                            "Text": "50",
-                            "Offset": 49,
-                            "Length": 2
-                        }
-                    ],
-                    "Type": "Quantity",
-                    "SubType": "Number"
-                },
-                {
-                    "Name": "50%",
-                    "Matches": [
-                        {
-                            "Text": "50%",
-                            "Offset": 49,
-                            "Length": 3
-                        }
-                    ],
-                    "Type": "Quantity",
-                    "SubType": "Percentage"
-                }
-            ]
-        },
-        {
-            "Id": "2",
-            "Entities": [
-                {
-                    "Name": "Great Depression",
-                    "Matches": [
-                        {
-                            "Text": "The Great Depression",
-                            "Offset": 0,
-                            "Length": 20
-                        }
-                    ],
-                    "WikipediaLanguage": "en",
-                    "WikipediaId": "Great Depression",
-                    "WikipediaUrl": "https://en.wikipedia.org/wiki/Great_Depression",
-                    "BingId": "d9364681-98ad-1a66-f869-a3f1c8ae8ef8"
-                },
-                {
-                    "Name": "1929",
-                    "Matches": [
-                        {
-                            "Text": "1929",
-                            "Offset": 30,
-                            "Length": 4
-                        }
-                    ],
-                    "Type": "DateTime",
-                    "SubType": "DateRange"
-                },
-                {
-                    "Name": "By 1933",
-                    "Matches": [
-                        {
-                            "Text": "By 1933",
-                            "Offset": 36,
-                            "Length": 7
-                        }
-                    ],
-                    "Type": "DateTime",
-                    "SubType": "DateRange"
-                },
-                {
-                    "Name": "Gross domestic product",
-                    "Matches": [
-                        {
-                            "Text": "GDP",
-                            "Offset": 49,
-                            "Length": 3
-                        }
-                    ],
-                    "WikipediaLanguage": "en",
-                    "WikipediaId": "Gross domestic product",
-                    "WikipediaUrl": "https://en.wikipedia.org/wiki/Gross_domestic_product",
-                    "BingId": "c859ed84-c0dd-e18f-394a-530cae5468a2"
-                },
-                {
-                    "Name": "United States",
-                    "Matches": [
-                        {
-                            "Text": "America",
-                            "Offset": 56,
-                            "Length": 7
-                        }
-                    ],
-                    "WikipediaLanguage": "en",
-                    "WikipediaId": "United States",
-                    "WikipediaUrl": "https://en.wikipedia.org/wiki/United_States",
-                    "BingId": "5232ed96-85b1-2edb-12c6-63e6c597a1de",
-                    "Type": "Location"
-                },
-                {
-                    "Name": "25",
-                    "Matches": [
-                        {
-                            "Text": "25",
-                            "Offset": 72,
-                            "Length": 2
-                        }
-                    ],
-                    "Type": "Quantity",
-                    "SubType": "Number"
-                },
-                {
-                    "Name": "25%",
-                    "Matches": [
-                        {
-                            "Text": "25%",
-                            "Offset": 72,
-                            "Length": 3
-                        }
-                    ],
-                    "Type": "Quantity",
-                    "SubType": "Percentage"
-                }
-            ]
-        }
-    ],
-    "Errors": []
-}
+Once more, `entity_results.documents` is a list of `EntitiesBatchResultItem` instances corresponding to the submitted documents. The `entities` attribute of each object is a list of `EntityRecord` objects, each describing an entity recognized in the original document. 
+
+There are several attributes of interest on an `EntityRecord` object, including its Bing ID, which can be used to retrieve more information about the entity using [Bing Entity Search](https://azure.microsoft.com/services/cognitive-services/bing-entity-search-api/). In this example, we'll use `name` (the entity's formal name),  `type` (its type), and `matches` (information about the parts of the document that were matched as each entity).
+
+The following Python code produces an HTML table containing each recognized entity's formal name, its type, and its matches' text and location within the original document.
+
+```python
+table = []
+header = "<tr><th><p>{}</th><th><p>{}</th><th><p>{}</th></tr>".format("ID", "Text", "Entities found")
+
+for doc, res in zip(entity_docs, entity_results.documents):
+    entities = "".join("<p><I>{} ({}):</i>{}".format(e.name, e.type, 
+        "".join('<br>"{}" in chars {}-{}'.format(m.text, m.offset, m.offset + m.length - 1)
+        for m in e.matches)) for e in res.entities)
+    row = "<tr><td><p>{doc.id}</td><td><p>{doc.text}</td><td>{entities}</td></tr>".format(doc=doc, entities=entities)
+    table.append(row)
+
+HTML("<table>{0}{1}</table>".format(header, "\n".join(table)))
 ```
+
+![Entity results](../media/quickstarts/python/entities.png)
 
 ## Next steps
 
